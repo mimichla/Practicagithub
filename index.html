@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+  <title>Mi Asistente IA</title>
+
+  <style>
+
+    body { font-family: Arial; max-width: 800px; margin: 50px auto; padding: 20px; }
+
+    .chat-container { border: 1px solid #ddd; height: 400px; overflow-y: scroll; padding: 20px; margin: 20px 0; }
+
+    input { width: 70%; padding: 12px; }
+
+    button { width: 25%; padding: 12px; background: #0078d4; color: white; border: none; }
+
+    .message { margin: 10px 0; padding: 10px; border-radius: 10px; }
+
+    .user { background: #e3f2fd; }
+
+    .ai { background: #f3f3f3; }
+
+  </style>
+
+</head>
+
+<body>
+
+  <h1>Mi Asistente IA</h1>
+
+
+
+  <div id="chat" class="chat-container"></div>
+
+
+
+  <input id="messageInput" type="text" placeholder="Pregunta algo">
+
+  <button onclick="sendMessage()">Enviar</button>
+
+
+
+  <script>
+
+    const API_KEY = "9rKxJsNWU2PtEFsiNPJoIbEZ806TGcjTtZW3MC5Jae5Ku8qx3K5vJQQJ99CBACR0EKYXJ3w3AAAAACOGO0z9";
+
+    const ENDPOINT = "https://inesdiclase3.cognitiveservices.azure.com/";
+
+    const DEPLOYMENT = "DeepSeek-V3.2"; 
+
+    //const API_VERSION = "2024-12-01-preview";
+
+
+
+    async function sendMessage() {
+
+      const input = document.getElementById('messageInput');
+
+      const userMessage = input.value.trim();
+
+      if (!userMessage) return;
+
+
+
+      input.value = '';
+
+      addMessage('Tú', userMessage, 'user');
+
+
+
+      try {
+
+        // URL + HEADERS CORRECTOS para Azure OpenAI
+
+        const url = `${ENDPOINT}/openai/deployments/${DEPLOYMENT}/chat/completions?api-version=${API_VERSION}`;
+
+
+
+        console.log('URL:', url); // DEBUG
+
+
+
+        const response = await fetch(url, {
+
+          method: 'POST',
+
+          headers: {
+
+            'Content-Type': 'application/json',
+
+            'api-key': API_KEY,
+
+            'Accept': 'application/json' // ← HEADER CRÍTICO
+
+          },
+
+          body: JSON.stringify({
+
+            messages: [{
+
+              role: "user",
+
+              content: userMessage
+
+            }],
+
+            max_completion_tokens: 500,
+
+          })
+
+        });
+
+
+
+        console.log('Status:', response.status); // DEBUG
+
+
+
+        if (!response.ok) {
+
+          const errorText = await response.text();
+
+          console.error('ERROR 400 completo:', errorText);
+
+          addMessage('❌', `Error ${response.status}: ${errorText.substring(0, 100)}`, 'ai');
+
+          return;
+
+        }
+
+
+
+        const data = await response.json();
+
+        console.log('Respuesta OK:', data); // DEBUG
+
+        addMessage('🤖 IA', data.choices[0].message.content, 'ai');
+
+      } catch (error) {
+
+        console.error('Fetch error:', error);
+
+        addMessage('❌', 'Error de conexión', 'ai');
+
+      }
+
+    }
+
+
+
+    function addMessage(sender, text, type) {
+
+      const chat = document.getElementById('chat');
+
+      chat.innerHTML += `<div class="message ${type}"><strong>${sender}:</strong> ${text}</div>`;
+
+      chat.scrollTop = chat.scrollHeight;
+
+    }
+
+
+
+    document.getElementById('messageInput').addEventListener('keypress', function(e) {
+
+      if (e.key === 'Enter') sendMessage();
+
+    });
+
+  </script>
+
+</body>
+
+</html>
