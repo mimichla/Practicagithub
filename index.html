@@ -4,171 +4,169 @@
 
 <head>
 
-  <title>Mi Asistente IA</title>
+ <title>Mi Asistente IA (DeepSeek)</title>
 
-  <style>
+ <style>
 
-    body { font-family: Arial; max-width: 800px; margin: 50px auto; padding: 20px; }
+  body { font-family: Arial; max-width: 800px; margin: 50px auto; padding: 20px; }
 
-    .chat-container { border: 1px solid #ddd; height: 400px; overflow-y: scroll; padding: 20px; margin: 20px 0; }
+  .chat-container { border: 1px solid #ddd; height: 400px; overflow-y: scroll; padding: 20px; margin: 20px 0; }
 
-    input { width: 70%; padding: 12px; }
+  input { width: 70%; padding: 12px; }
 
-    button { width: 25%; padding: 12px; background: #0078d4; color: white; border: none; }
+  button { width: 25%; padding: 12px; background: #0078d4; color: white; border: none; }
 
-    .message { margin: 10px 0; padding: 10px; border-radius: 10px; }
+  .message { margin: 10px 0; padding: 10px; border-radius: 10px; }
 
-    .user { background: #e3f2fd; }
+  .user { background: #e3f2fd; }
 
-    .ai { background: #f3f3f3; }
+  .ai { background: #f3f3f3; }
 
-  </style>
+ </style>
 
 </head>
 
 <body>
 
-  <h1>Mi Asistente IA</h1>
+ <h1>Mi Asistente IA (DeepSeek en Azure)</h1>
 
 
 
-  <div id="chat" class="chat-container"></div>
+ <div id="chat" class="chat-container"></div>
 
 
 
-  <input id="messageInput" type="text" placeholder="Pregunta algo">
+ <input id="messageInput" type="text" placeholder="Pregunta algo">
 
-  <button onclick="sendMessage()">Enviar</button>
+ <button onclick="sendMessage()">Enviar</button>
 
 
 
-  <script>
+ <script>
 
-    const API_KEY = "9rKxJsNWU2PtEFsiNPJoIbEZ806TGcjTtZW3MC5Jae5Ku8qx3K5vJQQJ99CBACR0EKYXJ3w3AAAAACOGO0z9";
+  // RELLENA ESTOS 3 VALORES CON LOS DE TU DEPLOYMENT DEEPSEEK
 
-    const ENDPOINT = "https://inesdiclase3.cognitiveservices.azure.com/";
+  const API_KEY  = "1IpHTrEzCKS9yqnEDGsDMgnQTaSot9AxUgOEsLDXVCxHlhPPGLtnJQQJ99CBACHYHv6XJ3w3AAAAACOGO2jn";
 
-    const DEPLOYMENT = "gpt-5.2-chat"; // Tu modelo
+  const ENDPOINT = "https://mlava-mm53fn7u-eastus2.services.ai.azure.com/models/"; // termina en /models/
 
-    const API_VERSION = "2024-12-01-preview";
+  const MODEL   = "DeepSeek-V3.2"; // o DeepSeek-R1, o el nombre exacto que veas
 
 
 
-    async function sendMessage() {
+  // La API de DeepSeek en Azure usa el endpoint /chat/completions con api-version 2024-05-01-preview[web:888][web:892]
 
-      const input = document.getElementById('messageInput');
+  const API_VERSION = "2024-05-01-preview";
 
-      const userMessage = input.value.trim();
 
-      if (!userMessage) return;
 
+  async function sendMessage() {
 
+   const input = document.getElementById('messageInput');
 
-      input.value = '';
+   const userMessage = input.value.trim();
 
-      addMessage('Tú', userMessage, 'user');
+   if (!userMessage) return;
 
 
 
-      try {
+   input.value = '';
 
-        // URL + HEADERS CORRECTOS para Azure OpenAI
+   addMessage('Tú', userMessage, 'user');
 
-        const url = `${ENDPOINT}/openai/deployments/${DEPLOYMENT}/chat/completions?api-version=${API_VERSION}`;
 
 
+   try {
 
-        console.log('URL:', url); // DEBUG
+    const url = `${ENDPOINT}chat/completions?api-version=${API_VERSION}`;
 
 
 
-        const response = await fetch(url, {
+    const response = await fetch(url, {
 
-          method: 'POST',
+     method: 'POST',
 
-          headers: {
+     headers: {
 
-            'Content-Type': 'application/json',
+      'Content-Type': 'application/json',
 
-            'api-key': API_KEY,
+      'api-key': API_KEY,
 
-            'Accept': 'application/json' // ← HEADER CRÍTICO
+      'Accept': 'application/json'
 
-          },
+     },
 
-          body: JSON.stringify({
+     body: JSON.stringify({
 
-            messages: [{
+      model: MODEL, // para DeepSeek en Foundry se pasa el nombre de modelo/deployment[web:892]
 
-              role: "user",
+      messages: [
 
-              content: userMessage
+       { role: "system", content: "Eres un asistente útil y respondes en español de forma breve." },
 
-            }],
+       { role: "user", content: userMessage }
 
-            max_completion_tokens: 500,
+      ],
 
-          })
+      max_tokens: 500
 
-        });
-
-
-
-        console.log('Status:', response.status); // DEBUG
-
-
-
-        if (!response.ok) {
-
-          const errorText = await response.text();
-
-          console.error('ERROR 400 completo:', errorText);
-
-          addMessage('❌', `Error ${response.status}: ${errorText.substring(0, 100)}`, 'ai');
-
-          return;
-
-        }
-
-
-
-        const data = await response.json();
-
-        console.log('Respuesta OK:', data); // DEBUG
-
-        addMessage('🤖 IA', data.choices[0].message.content, 'ai');
-
-      } catch (error) {
-
-        console.error('Fetch error:', error);
-
-        addMessage('❌', 'Error de conexión', 'ai');
-
-      }
-
-    }
-
-
-
-    function addMessage(sender, text, type) {
-
-      const chat = document.getElementById('chat');
-
-      chat.innerHTML += `<div class="message ${type}"><strong>${sender}:</strong> ${text}</div>`;
-
-      chat.scrollTop = chat.scrollHeight;
-
-    }
-
-
-
-    document.getElementById('messageInput').addEventListener('keypress', function(e) {
-
-      if (e.key === 'Enter') sendMessage();
+     })
 
     });
 
-  </script>
+
+
+    if (!response.ok) {
+
+     const errorText = await response.text();
+
+     console.error('Error completo:', errorText);
+
+     addMessage('❌', `Error ${response.status}: ${errorText.substring(0, 200)}`, 'ai');
+
+     return;
+
+    }
+
+
+
+    const data = await response.json();
+
+    const reply = data.choices?.[0]?.message?.content || "(Sin respuesta del modelo)";
+
+    addMessage('🤖 IA', reply, 'ai');
+
+   } catch (error) {
+
+    console.error('Fetch error:', error);
+
+    addMessage('❌', 'Error de conexión', 'ai');
+
+   }
+
+  }
+
+
+
+  function addMessage(sender, text, type) {
+
+   const chat = document.getElementById('chat');
+
+   chat.innerHTML += `<div class="message ${type}"><strong>${sender}:</strong> ${text}</div>`;
+
+   chat.scrollTop = chat.scrollHeight;
+
+  }
+
+
+
+  document.getElementById('messageInput').addEventListener('keypress', function(e) {
+
+   if (e.key === 'Enter') sendMessage();
+
+  });
+
+ </script>
 
 </body>
 
